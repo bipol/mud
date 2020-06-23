@@ -1,6 +1,5 @@
 # bipolmud
-`bipolmud` is a mud server implemented in go.  this is simply a hobbyist project to mess around with telnet and game design.
+`bipolmud` is a mud server implemented in go.
 
-
-## todo
-- [ ] implement a telnet package
+it is extremely ugly and is mostly a fever dream project involving pouring lots of code down the drain
+without thinking of the consequences
