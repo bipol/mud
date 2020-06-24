@@ -63,7 +63,24 @@ func (m *Server) JoinSession(session ssh.Session) *Player {
 }
 
 func (m *Server) LeaveSession(p *Player) {
+	m.SendMessage(fmt.Sprintf("%s has left the channel\n", p.name), p)
 	delete(m.sts, p.name)
+}
+
+func (m *Server) SendMessage(line string, p *Player) {
+	// go through all the player sessions in the world and send the message to them
+	for name, st := range m.sts {
+		// gross
+		if p.name == name {
+			continue
+		}
+		log.Printf("writing to %s's session", st.session.User())
+		//oh man this has got to be a race condition
+		_, err := io.WriteString(st.terminal, line)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 // a user should be able to ssh onto the server
@@ -78,6 +95,7 @@ func (m *Server) Start(p *Player) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//wait for user commands
 	for {
 		line, _ = p.st.terminal.ReadLine()
 		if line == "quit" {
@@ -86,16 +104,8 @@ func (m *Server) Start(p *Player) {
 		} else if line == "" {
 			continue
 		}
-		// go through all the player sessions in the world and send the message to them
-		for name, st := range m.sts {
-			if p.name == name {
-				continue
-			}
-			log.Printf("writing to %s's session", st.session.User())
-			_, err := io.WriteString(st.terminal, fmt.Sprintf("%s: %s\n", p.name, line))
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+		// send messages globally
+		line = fmt.Sprintf("%s: %s\n", p.name, line)
+		m.SendMessage(line, p)
 	}
 }
